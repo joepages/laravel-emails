@@ -37,6 +37,17 @@ abstract class TestCase extends TestCaseBase
 
     protected function setUp(): void
     {
+        // When running inside the main Laravel app, we need to register the
+        // service provider and migration paths BEFORE parent::setUp() runs,
+        // because RefreshDatabase runs migrations during setUpTraits().
+        // Orchestra Testbench handles this via getPackageProviders/defineDatabaseMigrations,
+        // but those lifecycle methods don't exist in Laravel's base TestCase.
+        if (class_exists(LaravelTestCase::class)) {
+            $this->refreshApplication();
+            $this->app->register(EmailsServiceProvider::class);
+            $this->app->make('migrator')->path(__DIR__ . '/Helpers/migrations');
+        }
+
         parent::setUp();
 
         config(['queue.default' => 'sync']);
