@@ -65,7 +65,7 @@ trait ManagesEmails
     /**
      * Store a new email for a parent model.
      */
-    public function storeEmail(EmailRequest $request, int $parentId): JsonResource
+    public function storeEmail(EmailRequest $request, int $parentId): JsonResponse
     {
         $parent = $this->resolveParentModel($parentId);
 
@@ -77,8 +77,7 @@ trait ManagesEmails
 
         return (new EmailResource($email))
             ->response()
-            ->setStatusCode(201)
-            ->original;
+            ->setStatusCode(201);
     }
 
     /**
