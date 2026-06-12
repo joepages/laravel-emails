@@ -1,0 +1,66 @@
+#!/usr/bin/env php
+<?php
+
+/**
+ * Copies this package's bundled Claude Code skills into the consuming
+ * project's .claude/skills/ directory.
+ *
+ * Intended to be run from the project root via composer script hooks:
+ *
+ *   "scripts": {
+ *       "post-install-cmd": ["@php vendor/<vendor>/<package>/bin/install-skill"],
+ *       "post-update-cmd": ["@php vendor/<vendor>/<package>/bin/install-skill"]
+ *   }
+ *
+ * Behavior:
+ *   - No-ops unless the working directory contains a .claude/ directory.
+ *   - No-ops when run inside the package repository itself.
+ *   - Overwrites on every run: the package copy is the source of truth.
+ */
+$packageRoot = dirname(__DIR__);
+$projectRoot = getcwd();
+
+if ($projectRoot === false || realpath($projectRoot) === realpath($packageRoot)) {
+    exit(0);
+}
+
+if (! is_dir($projectRoot.'/.claude')) {
+    exit(0);
+}
+
+$skillsDir = $packageRoot.'/skills';
+
+if (! is_dir($skillsDir)) {
+    exit(0);
+}
+
+function copyDirectory(string $source, string $destination): void
+{
+    if (! is_dir($destination)) {
+        mkdir($destination, 0755, true);
+    }
+
+    foreach (scandir($source) as $entry) {
+        if ($entry === '.' || $entry === '..') {
+            continue;
+        }
+
+        $sourcePath = $source.'/'.$entry;
+        $destinationPath = $destination.'/'.$entry;
+
+        if (is_dir($sourcePath)) {
+            copyDirectory($sourcePath, $destinationPath);
+        } else {
+            copy($sourcePath, $destinationPath);
+        }
+    }
+}
+
+foreach (scandir($skillsDir) as $skill) {
+    if ($skill === '.' || $skill === '..' || ! is_dir($skillsDir.'/'.$skill)) {
+        continue;
+    }
+
+    copyDirectory($skillsDir.'/'.$skill, $projectRoot.'/.claude/skills/'.$skill);
+    fwrite(STDOUT, 'Installed Claude Code skill: .claude/skills/'.$skill.PHP_EOL);
+}
