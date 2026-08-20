@@ -1,0 +1,83 @@
+image: php:8.4-cli
+
+definitions:
+  caches:
+    composer:
+      key:
+        files:
+          - composer.json
+      path: /root/.composer/cache
+
+  steps:
+    - step: &tests-82
+        name: PHPUnit / PHP 8.2
+        image: php:8.2-cli
+        caches: [composer]
+        script:
+          - apt-get update && apt-get install -y git unzip libzip-dev > /dev/null
+          - docker-php-ext-install zip > /dev/null
+          - curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer > /dev/null
+          - composer install --no-interaction --prefer-dist --no-progress
+          - vendor/bin/phpunit
+
+    - step: &tests-83
+        name: PHPUnit / PHP 8.3
+        image: php:8.3-cli
+        caches: [composer]
+        script:
+          - apt-get update && apt-get install -y git unzip libzip-dev > /dev/null
+          - docker-php-ext-install zip > /dev/null
+          - curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer > /dev/null
+          - composer install --no-interaction --prefer-dist --no-progress
+          - vendor/bin/phpunit
+
+    - step: &tests-84
+        name: PHPUnit / PHP 8.4
+        image: php:8.4-cli
+        caches: [composer]
+        script:
+          - apt-get update && apt-get install -y git unzip libzip-dev > /dev/null
+          - docker-php-ext-install zip > /dev/null
+          - curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer > /dev/null
+          - composer install --no-interaction --prefer-dist --no-progress
+          - vendor/bin/phpunit
+
+    - step: &tag-release
+        name: Tag release
+        image: php:8.4-cli
+        clone:
+          depth: full
+        script:
+          - apt-get update && apt-get install -y git > /dev/null
+          - VERSION=$(php -r "echo json_decode(file_get_contents('composer.json'))->version ?? '';")
+          - |
+            if [ -z "$VERSION" ]; then
+              echo "No version field in composer.json — skipping."
+              exit 0
+            fi
+          - TAG="v${VERSION}"
+          - |
+            if git rev-parse "$TAG" >/dev/null 2>&1; then
+              echo "Tag $TAG already exists — skipping."
+              exit 0
+            fi
+          - git config user.email "pipelines@activelogiclabs.com"
+          - git config user.name "Bitbucket Pipelines"
+          - git tag -a "$TAG" -m "$TAG"
+          - git push origin "$TAG"
+
+pipelines:
+  pull-requests:
+    '**':
+      - parallel:
+          - step: *tests-82
+          - step: *tests-83
+          - step: *tests-84
+
+  branches:
+    main:
+      - parallel:
+          - step: *tests-82
+          - step: *tests-83
+          - step: *tests-84
+      - step: *tag-release

@@ -14,7 +14,11 @@ jobs:
       fail-fast: true
       matrix:
         php: ['8.2', '8.3', '8.4']
-        laravel: ['12.*']
+        laravel: ['12.*', '13.*']
+        exclude:
+          # Laravel 13 requires PHP 8.3+
+          - php: '8.2'
+            laravel: '13.*'
 
     name: PHP ${{ matrix.php }} - Laravel ${{ matrix.laravel }}
 
@@ -36,8 +40,35 @@ jobs:
       - name: Run tests
         run: vendor/bin/phpunit
 
-  packagist:
+  tag-release:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     needs: tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Tag release
+        run: |
+          VERSION=$(php -r "echo json_decode(file_get_contents('composer.json'))->version ?? '';")
+          if [ -z "$VERSION" ]; then
+            echo "No version field in composer.json — skipping."
+            exit 0
+          fi
+          TAG="v${VERSION}"
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG already exists — skipping."
+            exit 0
+          fi
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git tag -a "$TAG" -m "$TAG"
+          git push origin "$TAG"
+
+  packagist:
+    needs: [tests, tag-release]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:

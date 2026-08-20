@@ -2,9 +2,15 @@
     "$schema": "https://getcomposer.org/schema.json",
     "name": "joepages/laravel-emails",
     "description": "Polymorphic emails package for Laravel - Attach N emails to any model",
-    "keywords": ["laravel", "emails", "polymorphic", "multi-tenancy"],
+    "keywords": [
+        "laravel",
+        "emails",
+        "polymorphic",
+        "multi-tenancy"
+    ],
     "license": "MIT",
     "type": "library",
+    "version": "1.2.0",
     "homepage": "https://github.com/joepages/laravel-emails",
     "authors": [
         {
@@ -18,13 +24,13 @@
     },
     "require": {
         "php": "^8.2",
-        "illuminate/contracts": "^11.0|^12.0",
-        "illuminate/database": "^11.0|^12.0",
-        "illuminate/support": "^11.0|^12.0"
+        "illuminate/contracts": "^11.0|^12.0|^13.0",
+        "illuminate/database": "^11.0|^12.0|^13.0",
+        "illuminate/support": "^11.0|^12.0|^13.0"
     },
     "require-dev": {
         "mockery/mockery": "^1.6",
-        "orchestra/testbench": "^9.0|^10.0",
+        "orchestra/testbench": "^9.0|^10.0|^11.0",
         "phpunit/phpunit": "^11.0|^12.0"
     },
     "autoload": {
