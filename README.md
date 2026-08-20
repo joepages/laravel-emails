@@ -9,7 +9,7 @@ Polymorphic email addresses for Laravel. Attach multiple email addresses to any 
 ## Requirements
 
 - PHP 8.2+
-- Laravel 11 or 12
+- Laravel 11+
 
 ## Installation
 
